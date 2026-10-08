@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1022172711723",
+    "project_id": "active-health-dev",
+    "storage_bucket": "active-health-dev.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1022172711723:android:32d696ec3a01359524d36e",
+        "android_client_info": {
+          "package_name": "in.activehealthcentre.active_health_patient"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDd5xgzxYKtg0noc86dOBh75u4yayswdCY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1022172711723:android:37ed34a570e4057c24d36e",
+        "android_client_info": {
+          "package_name": "in.activehealthcentre.active_health_team"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDd5xgzxYKtg0noc86dOBh75u4yayswdCY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

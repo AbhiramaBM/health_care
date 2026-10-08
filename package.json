@@ -1,0 +1,11 @@
+{
+  "name": "health-care-doctor-app",
+  "version": "1.0.0",
+  "description": "Active Health Centre Doctor Mobile Application",
+  "scripts": {
+    "proxy": "node cors_proxy.js"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.8.4"
+  }
+}

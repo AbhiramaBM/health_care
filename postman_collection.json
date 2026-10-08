@@ -1,0 +1,682 @@
+{
+  "info": {
+    "_postman_id": "ahc-doctors-api-v1",
+    "name": "AHC Doctors API",
+    "description": "Active Health Centre — Doctor mobile app API. Import alongside postman_environment.json. Run the Login request first; accessToken and refreshToken are saved automatically.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{accessToken}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "{{baseUrl}}" }
+  ],
+  "item": [
+
+    {
+      "name": "Auth",
+      "item": [
+
+        {
+          "name": "Login (email + password)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.token)        pm.environment.set('accessToken',  res.token);",
+                  "if (res.refreshToken) pm.environment.set('refreshToken', res.refreshToken);",
+                  "pm.test('Login succeeded', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Device-Id",  "value": "dev-machine-001", "description": "Optional — ties refresh token to this device for selective revocation" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"doctor@activehealth.com\",\n  \"password\": \"Doctor@12345\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Returns accessToken (8 h) and refreshToken (30 d). Both are stored automatically by the test script."
+          }
+        },
+
+        {
+          "name": "Refresh access token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.token)        pm.environment.set('accessToken',  res.token);",
+                  "if (res.refreshToken) pm.environment.set('refreshToken', res.refreshToken);",
+                  "pm.test('Refresh succeeded', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "refresh"]
+            },
+            "description": "Single-use rotation: old refresh token is consumed, a fresh access + refresh pair is returned and saved. Replaying an old token returns 401."
+          }
+        },
+
+        {
+          "name": "Get current user (me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "me"]
+            }
+          }
+        },
+
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\",\n  \"fcmToken\": \"<device-fcm-token>\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            },
+            "description": "Revokes the given refreshToken and removes the given fcmToken from all push registrations. Both fields are optional but recommended."
+          }
+        },
+
+        {
+          "name": "Register / update FCM token",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fcmToken\": \"<firebase-registration-token>\",\n  \"deviceId\": \"dev-machine-001\",\n  \"platform\": \"android\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/fcm-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "fcm-token"]
+            },
+            "description": "Registers this device for push notifications. Multiple devices per user are supported. The same FCM token is evicted from any other user account automatically."
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "Staff / Users",
+      "item": [
+
+        {
+          "name": "List all staff",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/staff",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "staff"]
+            },
+            "description": "DOCTOR role receives {id, name, role} only. STAFF/ADMIN also receive email."
+          }
+        },
+
+        {
+          "name": "Get staff member by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/staff/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "staff", ":userId"],
+              "variable": [{ "key": "userId", "value": "", "description": "UUID of the staff/doctor/admin user" }]
+            },
+            "description": "Returns {id, name, role, isActive} for DOCTOR. STAFF/ADMIN also receive email and createdAt. Returns 404 if the user is a patient."
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "Patients",
+      "item": [
+
+        {
+          "name": "List patients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "patients"],
+              "query": [
+                { "key": "page",  "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "search", "value": "", "disabled": true, "description": "Name, phone, or patientDisplayId" },
+                { "key": "onboardingComplete", "value": "true", "disabled": true }
+              ]
+            }
+          }
+        },
+
+        {
+          "name": "Search patients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients?search=sharma",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "patients"],
+              "query": [
+                { "key": "search", "value": "sharma" }
+              ]
+            }
+          }
+        },
+
+        {
+          "name": "Get patient profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/{{patientId}}/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "patients", "{{patientId}}", "profile"]
+            },
+            "description": "Returns PatientProfile + User fields including clinical notes. Set patientId in the environment."
+          }
+        },
+
+        {
+          "name": "List batches",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/batches",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "batches"]
+            }
+          }
+        },
+
+        {
+          "name": "Get batch by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/batches/:batchId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "batches", ":batchId"],
+              "variable": [{ "key": "batchId", "value": "" }]
+            },
+            "description": "Returns batch with activePatients and completedPatients arrays."
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "Daily Logs",
+      "item": [
+
+        {
+          "name": "List daily logs for patient",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/logs/daily/{{patientId}}?page=1&limit=30",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "logs", "daily", "{{patientId}}"],
+              "query": [
+                { "key": "page",  "value": "1" },
+                { "key": "limit", "value": "30" }
+              ]
+            },
+            "description": "Returns paginated DailyLog records including all meal photo paths (breakfastPhoto, lunchPhoto, dinnerPhoto, snackPhoto, juicePhoto)."
+          }
+        },
+
+        {
+          "name": "Get daily log by UUID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/logs/daily/id/{{logId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "logs", "daily", "id", "{{logId}}"]
+            },
+            "description": "Fetch a single DailyLog by its UUID. Set logId in the environment."
+          }
+        },
+
+        {
+          "name": "Get daily log by date",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/logs/daily/{{patientId}}/2026-10-07",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "logs", "daily", "{{patientId}}", "2026-10-07"]
+            }
+          }
+        },
+
+        {
+          "name": "Get weekly logs for patient",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/logs/weekly/{{patientId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "logs", "weekly", "{{patientId}}"]
+            }
+          }
+        },
+
+        {
+          "name": "Get missed logs for patient",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/logs/missed/{{patientId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "logs", "missed", "{{patientId}}"]
+            },
+            "description": "Returns missed-log records and consecutiveMissedDays streak."
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "Clinical Notes",
+      "item": [
+
+        {
+          "name": "Add note",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetType\": \"PATIENT_PROFILE\",\n  \"targetId\": \"{{patientId}}\",\n  \"patientId\": \"{{patientId}}\",\n  \"content\": \"HbA1c trending down — continue current plan.\",\n  \"noteType\": \"CLINICAL\",\n  \"urgency\": \"NORMAL\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notes"]
+            },
+            "description": "targetType: PATIENT_PROFILE | DAILY_LOG | WEEKLY_LOG | ALERT"
+          }
+        },
+
+        {
+          "name": "Get all notes for patient",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes/patient/{{patientId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notes", "patient", "{{patientId}}"]
+            }
+          }
+        },
+
+        {
+          "name": "Get notes for a daily log",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes/DAILY_LOG/{{logId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notes", "DAILY_LOG", "{{logId}}"]
+            }
+          }
+        },
+
+        {
+          "name": "Get notes for an alert",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes/ALERT/{{alertId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notes", "ALERT", "{{alertId}}"]
+            }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "Alerts",
+      "item": [
+
+        {
+          "name": "List alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts?acknowledged=false&page=1&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "alerts"],
+              "query": [
+                { "key": "acknowledged", "value": "false" },
+                { "key": "page",  "value": "1" },
+                { "key": "limit", "value": "50" },
+                { "key": "priority", "value": "URGENT", "disabled": true, "description": "URGENT | WATCH | INFO" },
+                { "key": "patientId", "value": "{{patientId}}", "disabled": true }
+              ]
+            },
+            "description": "MISSED_LOG and NO_LOG_3_DAYS types are filtered out for DOCTOR role automatically."
+          }
+        },
+
+        {
+          "name": "Get alert by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.alert) pm.environment.set('alertId', res.alert.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/{{alertId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "alerts", "{{alertId}}"]
+            }
+          }
+        },
+
+        {
+          "name": "Acknowledge alert — ignore",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"IGNORED\",\n  \"noteContent\": \"Patient confirmed values — no intervention needed.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/{{alertId}}/acknowledge",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "alerts", "{{alertId}}", "acknowledge"]
+            }
+          }
+        },
+
+        {
+          "name": "Acknowledge alert — change medication",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"MEDICATION_CHANGED\",\n  \"noteContent\": \"Adjusted metformin dosage due to high PP reading.\",\n  \"medications\": [\n    {\n      \"medicineName\": \"Metformin\",\n      \"dose\": \"1000mg\",\n      \"frequency\": \"twice daily\",\n      \"duration\": \"30 days\",\n      \"instructions\": \"After meals\",\n      \"action\": \"CONTINUE\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/{{alertId}}/acknowledge",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "alerts", "{{alertId}}", "acknowledge"]
+            },
+            "description": "DOCTOR only. Requires an existing DRAFT prescription for the patient."
+          }
+        },
+
+        {
+          "name": "Acknowledge alert — message patient",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"MESSAGE_SENT\",\n  \"messageText\": \"Hi, please ensure you log your meals before 10 PM. Call us if you have any issues.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/{{alertId}}/acknowledge",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "alerts", "{{alertId}}", "acknowledge"]
+            },
+            "description": "Sends a WhatsApp message via Interakt if the patient has given communication consent."
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "Prescriptions",
+      "item": [
+
+        {
+          "name": "Get prescriptions for patient",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prescriptions/patient/{{patientId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "prescriptions", "patient", "{{patientId}}"]
+            },
+            "description": "Returns all prescriptions (DRAFT + SENT). Each record contains a medications JSON array."
+          }
+        },
+
+        {
+          "name": "Get prescription by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prescriptions/:prescriptionId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "prescriptions", ":prescriptionId"],
+              "variable": [{ "key": "prescriptionId", "value": "" }]
+            }
+          }
+        },
+
+        {
+          "name": "Create prescription (DRAFT)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"medications\": [\n    {\n      \"medicineName\": \"Metformin\",\n      \"dose\": \"500mg\",\n      \"frequency\": \"twice daily\",\n      \"duration\": \"30 days\",\n      \"instructions\": \"After meals\",\n      \"action\": \"START\"\n    }\n  ],\n  \"advice\": \"Maintain low-carb diet. Monitor FBS daily.\",\n  \"internalNotes\": \"Patient anxious about insulin — reassured.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prescriptions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "prescriptions"]
+            },
+            "description": "DOCTOR only. Creates a DRAFT — not visible to patient until sent."
+          }
+        },
+
+        {
+          "name": "Send prescription (DRAFT → SENT)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prescriptions/:prescriptionId/send",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "prescriptions", ":prescriptionId", "send"],
+              "variable": [{ "key": "prescriptionId", "value": "" }]
+            },
+            "description": "DOCTOR only. Generates a PDF and delivers it to the patient. Prescription becomes immutable after this."
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "Chat",
+      "item": [
+
+        {
+          "name": "List my rooms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/rooms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "rooms"]
+            },
+            "description": "Returns DIRECT and GROUP rooms the caller is a member of, with last message and unread count."
+          }
+        },
+
+        {
+          "name": "Get or create DM room",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.room) pm.environment.set('roomId', res.room.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"<target-user-uuid>\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/rooms/direct",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "rooms", "direct"]
+            },
+            "description": "Idempotent — returns existing DM room or creates a new one. Saves roomId to environment."
+          }
+        },
+
+        {
+          "name": "Get room detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/rooms/{{roomId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "rooms", "{{roomId}}"]
+            },
+            "description": "Returns room metadata and full member list with lastReadAt per member. Membership check enforced."
+          }
+        },
+
+        {
+          "name": "Get message history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/rooms/{{roomId}}/messages?page=1&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "rooms", "{{roomId}}", "messages"],
+              "query": [
+                { "key": "page",  "value": "1" },
+                { "key": "limit", "value": "50" }
+              ]
+            }
+          }
+        },
+
+        {
+          "name": "Send message (REST)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Lab results look good — keeping current plan.\",\n  \"mentions\": [],\n  \"references\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/rooms/{{roomId}}/messages",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "rooms", "{{roomId}}", "messages"]
+            },
+            "description": "REST alternative to the send_message socket event. Identical DB write + socket broadcast (new_message) to all room members."
+          }
+        }
+
+      ]
+    }
+
+  ]
+}
