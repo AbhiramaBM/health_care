@@ -755,6 +755,7 @@ class _AlertActionsModalState extends State<_AlertActionsModal> {
                       final noteText = noteController.text.trim();
                       final success = await alertProvider.changeMedication(
                             alertId: widget.alert.id,
+                            patientId: widget.alert.patientId,
                             noteContent: noteText.isNotEmpty ? noteText : 'Adjusted medication based on alert.',
                             medications: [
                               {

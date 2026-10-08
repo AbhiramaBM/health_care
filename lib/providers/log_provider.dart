@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/utils/error_utils.dart';
 import '../models/daily_log_model.dart';
 import '../models/clinical_note_model.dart';
 import '../services/daily_log_service.dart';
@@ -34,7 +35,7 @@ class LogProvider with ChangeNotifier {
     try {
       _dailyLogs = await _logService.getDailyLogs(patientId);
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
     } finally {
       _isLoadingLogs = false;
       notifyListeners();
@@ -49,7 +50,7 @@ class LogProvider with ChangeNotifier {
     try {
       _patientNotes = await _noteService.getPatientNotes(patientId);
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
     } finally {
       _isLoadingNotes = false;
       notifyListeners();
@@ -71,7 +72,7 @@ class LogProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
       notifyListeners();
       return false;
     }
@@ -82,7 +83,7 @@ class LogProvider with ChangeNotifier {
       _logNotes = await _noteService.getLogNotes(logId);
       notifyListeners();
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
     }
   }
 
@@ -101,7 +102,7 @@ class LogProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
       notifyListeners();
       return false;
     }
@@ -112,7 +113,7 @@ class LogProvider with ChangeNotifier {
       _alertNotes = await _noteService.getAlertNotes(alertId);
       notifyListeners();
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
     }
   }
 
@@ -131,7 +132,7 @@ class LogProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
       notifyListeners();
       return false;
     }

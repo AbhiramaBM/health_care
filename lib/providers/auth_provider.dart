@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/utils/error_utils.dart';
 import '../core/storage/token_storage.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
@@ -55,7 +56,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
       _status = AuthStatus.error;
       notifyListeners();
       return false;
@@ -69,7 +70,7 @@ class AuthProvider with ChangeNotifier {
       await _authService.sendOtp(phone.trim());
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
       notifyListeners();
       return false;
     }
@@ -90,7 +91,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
       _status = AuthStatus.error;
       notifyListeners();
       return false;
@@ -112,7 +113,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
       _status = AuthStatus.error;
       notifyListeners();
       return false;
@@ -126,7 +127,7 @@ class AuthProvider with ChangeNotifier {
       await _authService.forgotPassword(email.trim());
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
       notifyListeners();
       return false;
     }
@@ -147,7 +148,7 @@ class AuthProvider with ChangeNotifier {
       );
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
       notifyListeners();
       return false;
     }

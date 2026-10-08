@@ -4,6 +4,8 @@ import '../config/app_config.dart';
 import '../storage/token_storage.dart';
 import 'api_endpoints.dart';
 
+import '../utils/error_utils.dart';
+
 class ApiException implements Exception {
   final String message;
   final int? statusCode;
@@ -11,8 +13,14 @@ class ApiException implements Exception {
 
   ApiException(this.message, {this.statusCode, this.data});
 
+  /// Formatted message in human-friendly terms without technical codes or jargon
+  String get userFriendlyMessage => ErrorUtils.toUserFriendlyMessage(this);
+
+  /// Developer debug string including status code
+  String get debugMessage => 'ApiException: $message (status: $statusCode)';
+
   @override
-  String toString() => 'ApiException: $message (status: $statusCode)';
+  String toString() => userFriendlyMessage;
 }
 
 class ApiClient {

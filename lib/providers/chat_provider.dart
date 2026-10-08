@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../core/utils/error_utils.dart';
 import '../models/chat_model.dart';
 import '../models/user_model.dart';
 import '../services/chat_service.dart';
@@ -121,7 +122,7 @@ class ChatProvider with ChangeNotifier {
     try {
       _conversations = await _chatService.getConversations();
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -147,7 +148,7 @@ class ChatProvider with ChangeNotifier {
       }
       return room;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
       return null;
     } finally {
       _isLoading = false;
@@ -192,7 +193,7 @@ class ChatProvider with ChangeNotifier {
         _socketService.markDelivered(m.id);
       }
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
     } finally {
       _isMessagesLoading = false;
       notifyListeners();

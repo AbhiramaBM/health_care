@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/utils/error_utils.dart';
 import '../models/patient_model.dart';
 import '../models/prescription_model.dart';
 import '../models/meal_photo_model.dart';
@@ -48,7 +49,7 @@ class PatientProvider with ChangeNotifier {
       _patients = await _patientService.getPatients(batch: _selectedBatch);
       _batches = await _patientService.getPatientBatches();
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -68,7 +69,7 @@ class PatientProvider with ChangeNotifier {
     try {
       _patients = await _patientService.searchPatients(query.trim());
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -91,7 +92,7 @@ class PatientProvider with ChangeNotifier {
       _medications = await _prescriptionService.getMedications(patientId);
       _mealPhotos = await _mediaService.getPatientMealPhotos(patientId);
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
     } finally {
       _isDetailsLoading = false;
       notifyListeners();
@@ -119,7 +120,7 @@ class PatientProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('ApiException: ', '');
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
       notifyListeners();
       return false;
     }
