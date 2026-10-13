@@ -32,7 +32,7 @@ void main() {
       expect(ErrorUtils.toUserFriendlyMessage(apiEx), 'Your session has expired. Please sign in again.');
 
       final apiEx2 = ApiException('Invalid email or password', statusCode: 401);
-      expect(ErrorUtils.toUserFriendlyMessage(apiEx2), 'Incorrect email or password. Please verify your details.');
+      expect(ErrorUtils.toUserFriendlyMessage(apiEx2), 'Invalid email or password.');
     });
 
     test('Translates permission and access errors', () {

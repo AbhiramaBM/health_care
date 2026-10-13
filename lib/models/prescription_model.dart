@@ -1,3 +1,5 @@
+import '../core/utils/message_formatter.dart';
+
 class PrescriptionModel {
   final String id;
   final String patientId;
@@ -20,6 +22,10 @@ class PrescriptionModel {
     required this.createdAt,
     this.status,
   });
+
+  /// User-facing sentence-case status (e.g. Sent, Draft, Active)
+  String get displayStatus => MessageFormatter.formatPrescriptionStatus(status);
+
 
   factory PrescriptionModel.fromJson(Map<String, dynamic> json) {
     var medsList = <MedicationModel>[];

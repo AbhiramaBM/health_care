@@ -55,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
           final auth = context.read<AuthProvider>();
 
           return AlertDialog(
-            title: Text(codeSent ? 'Enter Reset Code' : 'Reset Doctor Password'),
+            title: Text(codeSent ? 'Enter verification code' : 'Reset doctor password'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     codeSent
                         ? 'Enter the 6-digit verification code sent to ${emailForgotController.text.trim()} along with your new password.'
-                        : 'Enter your registered doctor email address. We will send a 6-digit verification code.',
+                        : 'Enter your registered doctor email address. A 6-digit verification code will be sent.',
                     style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
                   ),
                   const SizedBox(height: 14),
@@ -87,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: emailForgotController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: const InputDecoration(
-                        labelText: 'Doctor Email',
+                        labelText: 'Doctor email',
                         hintText: 'e.g. doctor@activehealth.com',
                         prefixIcon: Icon(Icons.email_outlined),
                       ),
@@ -97,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: otpForgotController,
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
-                        labelText: '6-Digit Code',
+                        labelText: '6-digit verification code',
                         hintText: '123456',
                         prefixIcon: Icon(Icons.lock_clock_outlined),
                       ),
@@ -107,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: newPasswordController,
                       obscureText: true,
                       decoration: const InputDecoration(
-                        labelText: 'New Password',
+                        labelText: 'New password',
                         hintText: 'Enter strong password',
                         prefixIcon: Icon(Icons.lock_outline),
                       ),
@@ -127,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     : () async {
                         final email = emailForgotController.text.trim();
                         if (email.isEmpty) {
-                          setDialogState(() => localError = 'Please enter your email');
+                          setDialogState(() => localError = 'Please enter your email address.');
                           return;
                         }
 
@@ -141,17 +141,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           if (sent) {
                             setDialogState(() => codeSent = true);
                           } else {
-                            setDialogState(() => localError = auth.errorMessage ?? 'Failed to send reset code');
+                            setDialogState(() => localError = auth.errorMessage ?? 'Unable to send verification code. Please try again.');
                           }
                         } else {
                           final otp = otpForgotController.text.trim();
                           final newPass = newPasswordController.text;
                           if (otp.length != 6) {
-                            setDialogState(() => localError = 'Please enter the 6-digit code');
+                            setDialogState(() => localError = 'Please enter the 6-digit code.');
                             return;
                           }
                           if (newPass.length < 6) {
-                            setDialogState(() => localError = 'Password must be at least 6 characters');
+                            setDialogState(() => localError = 'Password must be at least 6 characters long.');
                             return;
                           }
 
@@ -170,12 +170,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             if (ctx.mounted) Navigator.of(ctx).pop();
                             messenger.showSnackBar(
                               const SnackBar(
-                                content: Text('Password reset successfully! Please log in.'),
+                                content: Text('Password reset successfully. Please sign in.'),
                                 backgroundColor: AppTheme.successGreen,
                               ),
                             );
                           } else {
-                            setDialogState(() => localError = auth.errorMessage ?? 'Password reset failed');
+                            setDialogState(() => localError = auth.errorMessage ?? 'Unable to reset password. Please check your verification code.');
                           }
                         }
                       },
@@ -185,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: 18,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : Text(codeSent ? 'Set New Password' : 'Send Code'),
+                    : Text(codeSent ? 'Set new password' : 'Send code'),
               ),
             ],
           );
@@ -204,7 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Server Settings',
+            tooltip: 'Server settings',
             onPressed: () => showDialog(
               context: context,
               builder: (_) => const ServerConfigDialog(),
@@ -250,7 +250,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Clinical Management & Patient Monitoring',
+                    'Clinical management & patient monitoring',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -301,7 +301,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     segments: const [
                       ButtonSegment(
                         value: 0,
-                        label: Text('Doctor Email'),
+                        label: Text('Doctor email'),
                         icon: Icon(Icons.email_outlined, size: 16),
                       ),
                       ButtonSegment(
@@ -327,7 +327,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       decoration: const InputDecoration(
-                        labelText: 'Doctor Email',
+                        labelText: 'Doctor email',
                         hintText: 'doctor@activehealth.com',
                         prefixIcon: Icon(Icons.email_outlined),
                       ),
@@ -370,7 +370,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: _showForgotPasswordDialog,
-                        child: const Text('Forgot Password?'),
+                        child: const Text('Forgot password?'),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -385,7 +385,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               if (email.isEmpty || password.isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Please enter both email and password.'),
+                                    content: Text('Please enter both your email address and password.'),
                                   ),
                                 );
                                 return;
@@ -405,7 +405,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 valueColor: AlwaysStoppedAnimation(Colors.white),
                               ),
                             )
-                          : const Text('Log In with Email'),
+                          : const Text('Sign in with email'),
                     ),
                   ] else ...[
                     // Phone Number Field
@@ -414,7 +414,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.phone,
                       textInputAction: TextInputAction.next,
                       decoration: const InputDecoration(
-                        labelText: 'Registered Phone Number',
+                        labelText: 'Registered phone number',
                         hintText: '10-digit mobile number',
                         prefixIcon: Icon(Icons.phone_outlined),
                       ),
@@ -425,7 +425,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Row(
                       children: [
                         ChoiceChip(
-                          label: const Text('4-Digit PIN'),
+                          label: const Text('4-digit PIN'),
                           selected: _usePin,
                           onSelected: (val) {
                             if (val) setState(() => _usePin = true);
@@ -433,7 +433,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(width: 8),
                         ChoiceChip(
-                          label: const Text('SMS OTP'),
+                          label: const Text('SMS verification code'),
                           selected: !_usePin,
                           onSelected: (val) {
                             if (val) setState(() => _usePin = false);
@@ -467,7 +467,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 if (phone.isEmpty || pin.isEmpty) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('Please enter phone number and PIN.'),
+                                      content: Text('Please enter both your phone number and PIN.'),
                                     ),
                                   );
                                   return;
@@ -487,7 +487,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   valueColor: AlwaysStoppedAnimation(Colors.white),
                                 ),
                               )
-                            : const Text('Log In with PIN'),
+                            : const Text('Sign in with PIN'),
                       ),
                     ] else ...[
                       // OTP Flow
@@ -500,7 +500,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   if (phone.isEmpty) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('Please enter phone number.'),
+                                        content: Text('Please enter your phone number.'),
                                       ),
                                     );
                                     return;
@@ -513,7 +513,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     if (context.mounted) {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         const SnackBar(
-                                          content: Text('Verification OTP sent successfully!'),
+                                          content: Text('Verification code sent successfully.'),
                                           backgroundColor: AppTheme.successGreen,
                                         ),
                                       );
@@ -529,7 +529,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     valueColor: AlwaysStoppedAnimation(Colors.white),
                                   ),
                                 )
-                              : const Text('Send Verification OTP'),
+                              : const Text('Send verification code'),
                         ),
                       ] else ...[
                         TextField(
@@ -537,8 +537,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           keyboardType: TextInputType.number,
                           maxLength: 6,
                           decoration: InputDecoration(
-                            labelText: 'Verification OTP',
-                            hintText: 'Enter 6-digit OTP',
+                            labelText: 'Verification code',
+                            hintText: 'Enter 6-digit code',
                             prefixIcon: const Icon(Icons.lock_clock_outlined),
                             counterText: '',
                             suffixIcon: TextButton(
@@ -557,7 +557,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   if (phone.isEmpty || otp.isEmpty) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('Please enter phone and OTP.'),
+                                        content: Text('Please enter both your phone number and verification code.'),
                                       ),
                                     );
                                     return;
@@ -577,14 +577,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                     valueColor: AlwaysStoppedAnimation(Colors.white),
                                   ),
                                 )
-                              : const Text('Verify & Log In'),
+                              : const Text('Verify and sign in'),
                         ),
                       ],
                     ],
                   ],
                   const SizedBox(height: 20),
                   const Text(
-                    'Active Health Centre • Clinical Staff Only',
+                    'Active Health Centre • Clinical staff only',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,

@@ -67,7 +67,7 @@ class _PatientsScreenState extends State<PatientsScreen> {
                     child: Row(
                       children: [
                         FilterChip(
-                          label: const Text('All Batches'),
+                          label: const Text('All batches'),
                           selected: provider.selectedBatch == null,
                           onSelected: (_) => provider.filterByBatch(null),
                         ),
@@ -217,7 +217,7 @@ class _PatientsScreenState extends State<PatientsScreen> {
                                                                 color: AppTheme.criticalRed),
                                                             SizedBox(width: 3),
                                                             Text(
-                                                              'ALERT',
+                                                              'Alert',
                                                               style: TextStyle(
                                                                 fontSize: 10,
                                                                 fontWeight: FontWeight.bold,
@@ -251,7 +251,7 @@ class _PatientsScreenState extends State<PatientsScreen> {
                                                 const SizedBox(height: 3),
                                                 Text(
                                                   '${patient.age != null ? "${patient.age} yrs" : ""}'
-                                                  '${patient.gender != null ? " • ${patient.gender}" : ""}'
+                                                  '${patient.gender != null ? " • ${patient.displayGender}" : ""}'
                                                   '${patient.phone != null ? " • ${patient.phone}" : ""}',
                                                   style: const TextStyle(
                                                     fontSize: 13,
@@ -278,7 +278,7 @@ class _PatientsScreenState extends State<PatientsScreen> {
                                                               BorderRadius.circular(4),
                                                         ),
                                                         child: Text(
-                                                          patient.glucoseStatus!,
+                                                          patient.displayGlucoseStatus,
                                                           style: TextStyle(
                                                             fontSize: 10,
                                                             fontWeight: FontWeight.bold,
@@ -292,7 +292,7 @@ class _PatientsScreenState extends State<PatientsScreen> {
                                                       ),
                                                     if (patient.lastLogDate != null)
                                                       Text(
-                                                        'Log: ${patient.lastLogDate!.day}/${patient.lastLogDate!.month}/${patient.lastLogDate!.year}',
+                                                        'Last log: ${patient.lastLogDate!.day}/${patient.lastLogDate!.month}/${patient.lastLogDate!.year}',
                                                         style: const TextStyle(
                                                           fontSize: 11,
                                                           color: AppTheme.textSecondary,

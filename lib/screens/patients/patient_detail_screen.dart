@@ -218,10 +218,10 @@ class _PatientDetailScreenState extends State<PatientDetailScreen>
                         initialValue: action,
                         decoration: const InputDecoration(labelText: 'Action'),
                         items: const [
-                          DropdownMenuItem(value: 'NEW', child: Text('NEW')),
-                          DropdownMenuItem(value: 'CONTINUE', child: Text('CONTINUE')),
-                          DropdownMenuItem(value: 'MODIFIED', child: Text('MODIFIED')),
-                          DropdownMenuItem(value: 'DISCONTINUED', child: Text('DISCONTINUED')),
+                          DropdownMenuItem(value: 'NEW', child: Text('New')),
+                          DropdownMenuItem(value: 'CONTINUE', child: Text('Continue')),
+                          DropdownMenuItem(value: 'MODIFIED', child: Text('Modified')),
+                          DropdownMenuItem(value: 'DISCONTINUED', child: Text('Discontinued')),
                         ],
                         onChanged: (val) {
                           if (val != null) setDialogState(() => action = val);
@@ -271,7 +271,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen>
                   ? null
                   : () async {
                       if (medNameController.text.trim().isEmpty || doseController.text.trim().isEmpty) {
-                        setDialogState(() => localError = 'Medicine name and dose are required');
+                        setDialogState(() => localError = 'Medicine name and dose are required.');
                         return;
                       }
 
@@ -785,25 +785,43 @@ class _ClinicalNotesTab extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  note.authorName ?? 'Doctor / Staff',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13,
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        note.authorName ?? 'Doctor / staff',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      if (note.category != null && note.category!.isNotEmpty) ...[
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            note.displayCategory,
+                                            style: const TextStyle(fontSize: 10, color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
-                                ),
-                                Text(
-                                  dateStr,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: AppTheme.textMuted,
+                                  Text(
+                                    dateStr,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppTheme.textMuted,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                ],
+                              ),
                             const SizedBox(height: 8),
                             Text(
                               note.content,
@@ -865,7 +883,7 @@ class _PrescriptionsTab extends StatelessWidget {
               children: [
         if (medications.isNotEmpty) ...[
           const Text(
-            'Active Medications',
+            'Active medications',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
@@ -897,7 +915,7 @@ class _PrescriptionsTab extends StatelessWidget {
         ],
         if (prescriptions.isNotEmpty) ...[
           const Text(
-            'Prescription Records',
+            'Prescription records',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
@@ -906,7 +924,7 @@ class _PrescriptionsTab extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 8),
               child: ExpansionTile(
                 title: Text(
-                  'Rx: ${rx.status ?? "Prescription"}',
+                  'Prescription (${rx.displayStatus})',
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 subtitle: Text(

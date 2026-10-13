@@ -1,3 +1,5 @@
+import '../core/utils/message_formatter.dart';
+
 class ClinicalNoteModel {
   final String id;
   final String? patientId;
@@ -20,6 +22,10 @@ class ClinicalNoteModel {
     required this.createdAt,
     this.category,
   });
+
+  /// User-facing sentence-case note category
+  String get displayCategory => MessageFormatter.formatNoteCategory(category);
+
 
   factory ClinicalNoteModel.fromJson(Map<String, dynamic> json) {
     final authorMap = json['author'] is Map ? json['author'] as Map : null;

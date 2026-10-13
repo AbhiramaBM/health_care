@@ -74,7 +74,7 @@ class SettingsScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            user?.role?.toUpperCase() ?? 'DOCTOR',
+                            user?.displayRole ?? 'Doctor',
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
@@ -92,7 +92,7 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 20),
 
           const Text(
-            'Server & Push Notification Settings',
+            'Server & push notification settings',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
@@ -107,7 +107,7 @@ class SettingsScreen extends StatelessWidget {
                 ListTile(
                   leading: const Icon(Icons.dns_outlined,
                       color: AppTheme.primaryColor),
-                  title: const Text('API & Socket Server Endpoints'),
+                  title: const Text('API & socket server endpoints'),
                   subtitle: Text(
                     'REST: ${AppConfig.apiBaseUrl}\nSocket: ${AppConfig.socketServerUrl}',
                     style: const TextStyle(fontSize: 12),
@@ -123,8 +123,8 @@ class SettingsScreen extends StatelessWidget {
                 ListTile(
                   leading: const Icon(Icons.notifications_active_outlined,
                       color: AppTheme.infoBlue),
-                  title: const Text('Register Device Token (FCM)'),
-                  subtitle: const Text('Calls PATCH /auth/fcm-token with device identifier'),
+                  title: const Text('Register device token (FCM)'),
+                  subtitle: const Text('Register this device for real-time notifications'),
                   trailing: const Icon(Icons.send_outlined),
                   onTap: () async {
                     try {
@@ -135,7 +135,7 @@ class SettingsScreen extends StatelessWidget {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Device token registered with AHC server!'),
+                            content: Text('Device token registered successfully.'),
                             backgroundColor: AppTheme.successGreen,
                           ),
                         );

@@ -16,7 +16,7 @@ class AppConfig {
 
   static String socketServerUrl = const String.fromEnvironment(
     'SOCKET_URL',
-    defaultValue: kIsWeb ? 'http://localhost:5050' : 'https://api.activehealthcentre.in',
+    defaultValue: 'https://api.activehealthcentre.in',
   );
 
   static String socketNamespace = '/';

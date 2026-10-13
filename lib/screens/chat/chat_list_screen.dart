@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/message_formatter.dart';
 import '../../providers/chat_provider.dart';
 import 'conversation_screen.dart';
 
@@ -44,7 +45,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'Direct Message Colleague',
+                    'Direct message colleague',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   IconButton(
@@ -61,7 +62,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
               const Divider(height: 20),
               Expanded(
                 child: chatProvider.chatUsers.isEmpty
-                    ? const Center(child: Text('No staff members found'))
+                    ? const Center(child: Text('No staff members found.'))
                     : ListView.separated(
                         controller: scrollController,
                         itemCount: chatProvider.chatUsers.length,
@@ -86,7 +87,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               style: const TextStyle(fontWeight: FontWeight.w600),
                             ),
                             subtitle: Text(
-                              staff.role?.toUpperCase() ?? 'STAFF',
+                              MessageFormatter.formatRole(staff.role),
                               style: const TextStyle(fontSize: 12, color: AppTheme.primaryColor),
                             ),
                             onTap: () async {
@@ -147,7 +148,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showNewChatDialog,
         icon: const Icon(Icons.edit_outlined),
-        label: const Text('New DM'),
+        label: const Text('New direct message'),
         backgroundColor: AppTheme.primaryColor,
       ),
       body: chatProvider.isLoading
@@ -167,7 +168,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       const SizedBox(height: 8),
                       ElevatedButton.icon(
                         icon: const Icon(Icons.add),
-                        label: const Text('Start Direct Message'),
+                        label: const Text('Start direct message'),
                         onPressed: _showNewChatDialog,
                       ),
                     ],
@@ -202,14 +203,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           ),
                         ),
                         title: Text(
-                          conv.title ?? 'Team Chat Room',
+                          conv.title ?? 'Team chat room',
                           style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 15,
                           ),
                         ),
                         subtitle: Text(
-                          conv.lastMessage ?? 'No messages yet',
+                          conv.lastMessage ?? 'No messages yet.',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(

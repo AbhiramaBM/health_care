@@ -39,14 +39,14 @@ class _ServerConfigDialogState extends State<ServerConfigDialog> {
     );
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Server endpoints updated')),
+      const SnackBar(content: Text('Server endpoints updated successfully.')),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Server Configuration'),
+      title: const Text('Server configuration'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -60,7 +60,7 @@ class _ServerConfigDialogState extends State<ServerConfigDialog> {
             TextField(
               controller: _apiUrlController,
               decoration: const InputDecoration(
-                labelText: 'API Base URL',
+                labelText: 'API base URL',
                 hintText: 'e.g. https://api.myclinic.com',
                 prefixIcon: Icon(Icons.http),
               ),
@@ -69,7 +69,7 @@ class _ServerConfigDialogState extends State<ServerConfigDialog> {
             TextField(
               controller: _socketUrlController,
               decoration: const InputDecoration(
-                labelText: 'Socket Server URL',
+                labelText: 'Socket server URL',
                 hintText: 'e.g. https://socket.myclinic.com',
                 prefixIcon: Icon(Icons.cable),
               ),
@@ -78,7 +78,7 @@ class _ServerConfigDialogState extends State<ServerConfigDialog> {
             TextField(
               controller: _socketNsController,
               decoration: const InputDecoration(
-                labelText: 'Socket Namespace',
+                labelText: 'Socket namespace',
                 hintText: 'e.g. / or /chat',
                 prefixIcon: Icon(Icons.tag),
               ),
@@ -93,7 +93,7 @@ class _ServerConfigDialogState extends State<ServerConfigDialog> {
         ),
         ElevatedButton(
           onPressed: _save,
-          child: const Text('Save & Apply'),
+          child: const Text('Save and apply'),
         ),
       ],
     );

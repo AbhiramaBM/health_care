@@ -1,8 +1,11 @@
+import '../core/utils/message_formatter.dart';
+
 class AlertModel {
   final String id;
   final String? patientId;
   final String? patientName;
   final String? patientPhone;
+  final String? type;
   final String title;
   final String? description;
   final String severity; // URGENT, WATCH, INFO / high, medium, low
@@ -16,6 +19,7 @@ class AlertModel {
     this.patientId,
     this.patientName,
     this.patientPhone,
+    this.type,
     required this.title,
     this.description,
     required this.severity,
@@ -25,19 +29,35 @@ class AlertModel {
     this.data,
   });
 
+  /// User-facing sentence-case title without technical codes
+  String get displayTitle => MessageFormatter.formatAlertTitle(type ?? title, title);
+
+  /// User-facing complete sentence description
+  String get displayDescription => MessageFormatter.formatAlertDescription(type ?? title, description);
+
+  /// User-facing sentence-case severity (e.g. Critical, Urgent, Watch, Info)
+  String get displaySeverity => MessageFormatter.formatSeverity(severity);
+
+  /// User-facing sentence-case status (e.g. Acknowledged, Pending)
+  String get displayStatus => MessageFormatter.formatAlertStatus(status, isAcknowledged: isAcknowledged);
+
   factory AlertModel.fromJson(Map<String, dynamic> json) {
     final isAck = json['acknowledged'] == true ||
         (json['status']?.toString().toLowerCase() == 'acknowledged');
 
     final pat = json['patient'] is Map ? json['patient'] : null;
+    final rawType = json['type']?.toString();
+    final rawTitle = (json['title'] ?? rawType ?? 'Clinical Alert').toString();
+    final rawDesc = (json['message'] ?? json['description'])?.toString();
 
     return AlertModel(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
       patientId: json['patientId']?.toString() ?? pat?['id']?.toString(),
       patientName: (json['patientName'] ?? pat?['name'])?.toString(),
       patientPhone: (json['patientPhone'] ?? pat?['phone'])?.toString(),
-      title: (json['type'] ?? json['title'] ?? 'Clinical Alert').toString(),
-      description: (json['message'] ?? json['description'])?.toString(),
+      type: rawType,
+      title: rawTitle,
+      description: rawDesc,
       severity: (json['priority'] ?? json['severity'] ?? 'URGENT').toString(),
       status: isAck ? 'acknowledged' : (json['status'] ?? 'pending').toString().toLowerCase(),
       isAcknowledged: isAck,
@@ -53,6 +73,7 @@ class AlertModel {
     String? patientId,
     String? patientName,
     String? patientPhone,
+    String? type,
     String? title,
     String? description,
     String? severity,
@@ -66,6 +87,7 @@ class AlertModel {
       patientId: patientId ?? this.patientId,
       patientName: patientName ?? this.patientName,
       patientPhone: patientPhone ?? this.patientPhone,
+      type: type ?? this.type,
       title: title ?? this.title,
       description: description ?? this.description,
       severity: severity ?? this.severity,
@@ -82,6 +104,7 @@ class AlertModel {
       'patientId': patientId,
       'patientName': patientName,
       'patientPhone': patientPhone,
+      if (type != null) 'type': type,
       'title': title,
       'description': description,
       'severity': severity,

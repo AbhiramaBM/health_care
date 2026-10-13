@@ -57,7 +57,8 @@ class ChatProvider with ChangeNotifier {
       if (msg.roomId == _activeRoomId) {
         // Prevent duplicate if already added
         final optIdx = _activeMessages.indexWhere((m) =>
-            m.id.startsWith('local_') && m.content == msg.content && m.senderId == msg.senderId);
+            m.id == msg.id ||
+            (m.id.startsWith('local_') && m.content == msg.content));
         if (optIdx != -1) {
           _activeMessages[optIdx] = msg;
         } else if (!_activeMessages.any((m) => m.id == msg.id)) {

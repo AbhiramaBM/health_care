@@ -1,3 +1,5 @@
+import '../core/utils/message_formatter.dart';
+
 class UserModel {
   final String id;
   final String? name;
@@ -16,6 +18,9 @@ class UserModel {
     this.avatarUrl,
     this.metadata,
   });
+
+  /// User-facing sentence-case role
+  String get displayRole => MessageFormatter.formatRole(role);
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(

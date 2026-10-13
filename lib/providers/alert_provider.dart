@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../core/api/api_client.dart';
+import '../core/socket/socket_service.dart';
 import '../core/storage/token_storage.dart';
 import '../core/utils/error_utils.dart';
 import '../models/alert_model.dart';
@@ -25,6 +27,30 @@ class AlertProvider with ChangeNotifier {
   bool get showAcknowledged => _showAcknowledged;
   String? get selectedPriority => _selectedPriority;
   String? get selectedStatus => _showAcknowledged ? 'acknowledged' : 'pending';
+
+  final _alertNotificationController = StreamController<AlertModel>.broadcast();
+  Stream<AlertModel> get onAlertNotification => _alertNotificationController.stream;
+  final Set<String> _notifiedAlertIds = <String>{};
+  StreamSubscription? _socketAlertSub;
+
+  AlertProvider() {
+    _socketAlertSub = SocketService().onAlertReceived.listen((data) {
+      try {
+        final alert = AlertModel.fromJson(data);
+        final existingIdx = _alerts.indexWhere((a) => a.id == alert.id);
+        if (existingIdx != -1) {
+          _alerts[existingIdx] = alert;
+        } else {
+          _alerts.insert(0, alert);
+        }
+        if (!alert.isAcknowledged && !_notifiedAlertIds.contains(alert.id)) {
+          _notifiedAlertIds.add(alert.id);
+          _alertNotificationController.add(alert);
+        }
+        notifyListeners();
+      } catch (_) {}
+    });
+  }
 
   int get pendingAlertsCount =>
       _alerts.where((a) => !a.isAcknowledged).length;
@@ -89,6 +115,14 @@ class AlertProvider with ChangeNotifier {
             localPending.where((a) => !fetchedIds.contains(a.id)).toList();
 
         _alerts = [...filteredLocal, ...fetched];
+
+        // Notify for any pending alerts that haven't been shown yet
+        for (final a in _alerts) {
+          if (!a.isAcknowledged && !_notifiedAlertIds.contains(a.id)) {
+            _notifiedAlertIds.add(a.id);
+            _alertNotificationController.add(a);
+          }
+        }
       }
     } catch (e) {
       _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
@@ -264,5 +298,12 @@ class AlertProvider with ChangeNotifier {
       }
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _socketAlertSub?.cancel();
+    _alertNotificationController.close();
+    super.dispose();
   }
 }

@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:socket_io_client/socket_io_client.dart' as socket_io;
 import '../config/app_config.dart';
 import '../storage/token_storage.dart';
 import '../api/api_endpoints.dart';
+import '../utils/error_utils.dart';
 
 class SocketService {
   socket_io.Socket? _socket;
@@ -22,6 +24,7 @@ class SocketService {
   final _messagesReadController = StreamController<Map<String, dynamic>>.broadcast();
   final _reactionUpdatedController = StreamController<Map<String, dynamic>>.broadcast();
   final _connectionStateController = StreamController<bool>.broadcast();
+  final _alertController = StreamController<Map<String, dynamic>>.broadcast();
   final _errorController = StreamController<String>.broadcast();
 
   Stream<Map<String, dynamic>> get onMessageReceived => _messageController.stream;
@@ -31,11 +34,26 @@ class SocketService {
   Stream<Map<String, dynamic>> get onMessagesRead => _messagesReadController.stream;
   Stream<Map<String, dynamic>> get onReactionUpdated => _reactionUpdatedController.stream;
   Stream<bool> get onConnectionChanged => _connectionStateController.stream;
+  Stream<Map<String, dynamic>> get onAlertReceived => _alertController.stream;
   Stream<String> get onError => _errorController.stream;
 
   static final SocketService _instance = SocketService._internal();
   factory SocketService() => _instance;
   SocketService._internal();
+
+  Map<String, dynamic>? _parseMapData(dynamic data) {
+    if (data == null) return null;
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    if (data is String) {
+      try {
+        final decoded = jsonDecode(data);
+        if (decoded is Map<String, dynamic>) return decoded;
+        if (decoded is Map) return Map<String, dynamic>.from(decoded);
+      } catch (_) {}
+    }
+    return null;
+  }
 
   /// Initialize and connect to the Socket.IO server
   void connect({bool force = false}) {
@@ -62,6 +80,7 @@ class SocketService {
     if (token != null && token.isNotEmpty) {
       options.setAuth({'token': token});
       options.setExtraHeaders({'Authorization': 'Bearer $token'});
+      options.setQuery({'token': token});
     }
 
     _socket = socket_io.io(fullUrl, options.build());
@@ -86,69 +105,89 @@ class SocketService {
       _connectionStateController.add(false);
     });
 
-    // Listen for new_message
-    _socket?.on(SocketEvents.newMessage, (data) {
-      if (data is Map<String, dynamic>) {
-        _messageController.add(data);
-      } else if (data is Map) {
-        _messageController.add(Map<String, dynamic>.from(data));
+    // Listen for new_message and message
+    void handleNewMessage(dynamic data) {
+      final parsed = _parseMapData(data);
+      if (parsed != null) {
+        _messageController.add(parsed);
       }
-    });
+    }
+
+    _socket?.on(SocketEvents.newMessage, handleNewMessage);
+    _socket?.on('message', handleNewMessage);
+
+    // Listen for real-time alerts
+    void handleNewAlert(dynamic data) {
+      final parsed = _parseMapData(data);
+      if (parsed != null) {
+        _alertController.add(parsed);
+      }
+    }
+
+    _socket?.on('new_alert', handleNewAlert);
+    _socket?.on('alert', handleNewAlert);
 
     // Listen for message_deleted
     _socket?.on(SocketEvents.messageDeleted, (data) {
-      if (data is Map) {
-        _messageDeletedController.add(Map<String, dynamic>.from(data));
+      final parsed = _parseMapData(data);
+      if (parsed != null) {
+        _messageDeletedController.add(parsed);
       }
     });
 
     // Listen for user_typing
     _socket?.on(SocketEvents.userTyping, (data) {
-      if (data is Map) {
-        final map = Map<String, dynamic>.from(data);
-        map['isTyping'] = true;
-        _typingController.add(map);
+      final parsed = _parseMapData(data);
+      if (parsed != null) {
+        parsed['isTyping'] = true;
+        _typingController.add(parsed);
       }
     });
 
     // Listen for user_stop_typing
     _socket?.on(SocketEvents.userStopTyping, (data) {
-      if (data is Map) {
-        final map = Map<String, dynamic>.from(data);
-        map['isTyping'] = false;
-        _typingController.add(map);
+      final parsed = _parseMapData(data);
+      if (parsed != null) {
+        parsed['isTyping'] = false;
+        _typingController.add(parsed);
       }
     });
 
     // Listen for message_delivered
     _socket?.on(SocketEvents.messageDelivered, (data) {
-      if (data is Map) {
-        _messageDeliveredController.add(Map<String, dynamic>.from(data));
+      final parsed = _parseMapData(data);
+      if (parsed != null) {
+        _messageDeliveredController.add(parsed);
       }
     });
 
     // Listen for messages_read
     _socket?.on(SocketEvents.messagesRead, (data) {
-      if (data is Map) {
-        _messagesReadController.add(Map<String, dynamic>.from(data));
+      final parsed = _parseMapData(data);
+      if (parsed != null) {
+        _messagesReadController.add(parsed);
       }
     });
 
     // Listen for reaction_updated
     _socket?.on(SocketEvents.reactionUpdated, (data) {
-      if (data is Map) {
-        _reactionUpdatedController.add(Map<String, dynamic>.from(data));
+      final parsed = _parseMapData(data);
+      if (parsed != null) {
+        _reactionUpdatedController.add(parsed);
       }
     });
 
     // Listen for error event
     _socket?.on(SocketEvents.error, (data) {
-      if (data is Map && data['message'] != null) {
-        _errorController.add(data['message'].toString());
+      final parsed = _parseMapData(data);
+      if (parsed != null && parsed['message'] != null) {
+        _errorController.add(ErrorUtils.toUserFriendlyMessage(parsed['message']));
       } else if (data != null) {
-        _errorController.add(data.toString());
+        _errorController.add(ErrorUtils.toUserFriendlyMessage(data));
       }
     });
+
+    _socket?.connect();
   }
 
   /// Join a room (payload: string roomId)
@@ -232,6 +271,7 @@ class SocketService {
     _messagesReadController.close();
     _reactionUpdatedController.close();
     _connectionStateController.close();
+    _alertController.close();
     _errorController.close();
   }
 }

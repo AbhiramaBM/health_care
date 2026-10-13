@@ -56,7 +56,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e, isLoginContext: true);
       _status = AuthStatus.error;
       notifyListeners();
       return false;
@@ -91,7 +91,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e, isLoginContext: true);
       _status = AuthStatus.error;
       notifyListeners();
       return false;
@@ -113,7 +113,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e, isLoginContext: true);
       _status = AuthStatus.error;
       notifyListeners();
       return false;

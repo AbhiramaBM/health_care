@@ -1,3 +1,5 @@
+import '../core/utils/message_formatter.dart';
+
 class PatientModel {
   final String id;
   final String name;
@@ -38,6 +40,18 @@ class PatientModel {
     this.glucoseStatus,
     this.hasAlert = false,
   });
+
+  /// User-facing sentence-case glucose status
+  String get displayGlucoseStatus => MessageFormatter.formatGlucoseStatus(glucoseStatus);
+
+  /// User-facing sentence-case condition
+  String get displayCondition =>
+      condition != null && condition!.isNotEmpty ? MessageFormatter.toSentenceCase(condition!) : 'Not recorded';
+
+  /// User-facing sentence-case gender
+  String get displayGender =>
+      gender != null && gender!.isNotEmpty ? MessageFormatter.toSentenceCase(gender!) : '';
+
 
   factory PatientModel.fromJson(Map<String, dynamic> json) {
     final profileData = json['profile'] is Map<String, dynamic>

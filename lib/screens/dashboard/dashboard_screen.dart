@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/alert_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/patient_provider.dart';
 import '../../providers/alert_provider.dart';
@@ -19,15 +21,74 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
+  StreamSubscription<AlertModel>? _alertNotificationSub;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final alertProvider = context.read<AlertProvider>();
       context.read<PatientProvider>().fetchPatients();
-      context.read<AlertProvider>().fetchAlerts();
+      alertProvider.fetchAlerts();
       context.read<ChatProvider>().fetchConversations();
+
+      // Listen for alert notifications in real-time
+      _alertNotificationSub?.cancel();
+      _alertNotificationSub = alertProvider.onAlertNotification.listen((alert) {
+        if (!mounted) return;
+        _showInAppAlertNotification(alert);
+      });
     });
+  }
+
+  @override
+  void dispose() {
+    _alertNotificationSub?.cancel();
+    super.dispose();
+  }
+
+  void _showInAppAlertNotification(AlertModel alert) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.notifications_active, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    alert.displayTitle,
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                  ),
+                  Text(
+                    alert.displayDescription,
+                    style: const TextStyle(fontSize: 12, color: Colors.white70),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: alert.displaySeverity == 'Critical' || alert.displaySeverity == 'Urgent'
+            ? AppTheme.criticalRed
+            : AppTheme.warningAmber,
+        duration: const Duration(seconds: 5),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        action: SnackBarAction(
+          label: 'View',
+          textColor: Colors.white,
+          onPressed: () {
+            setState(() => _currentIndex = 2); // Switch to Alerts tab
+          },
+        ),
+      ),
+    );
   }
 
   final List<Widget> _pages = const [
@@ -116,7 +177,7 @@ class _DashboardHomeTab extends StatelessWidget {
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             Text(
-              user?.role?.toUpperCase() ?? 'DOCTOR',
+              user?.displayRole ?? 'Doctor',
               style: const TextStyle(
                 fontSize: 11,
                 color: AppTheme.primaryColor,
@@ -128,7 +189,7 @@ class _DashboardHomeTab extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh Data',
+            tooltip: 'Refresh data',
             onPressed: () {
               patientProvider.fetchPatients(refresh: true);
               alertProvider.fetchAlerts(refresh: true);
@@ -162,7 +223,7 @@ class _DashboardHomeTab extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _MetricCard(
-                      label: 'Active Alerts',
+                      label: 'Active alerts',
                       value: '${alertProvider.pendingAlertsCount}',
                       icon: Icons.warning_amber_rounded,
                       color: AppTheme.criticalRed,
@@ -175,7 +236,7 @@ class _DashboardHomeTab extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _MetricCard(
-                      label: 'Chat Rooms',
+                      label: 'Chat rooms',
                       value: '${chatProvider.conversations.length}',
                       icon: Icons.forum_outlined,
                       color: AppTheme.infoBlue,
@@ -199,7 +260,7 @@ class _DashboardHomeTab extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'Clinical Attention Required',
+                    'Clinical attention required',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -207,7 +268,7 @@ class _DashboardHomeTab extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${alertProvider.alerts.length} Total',
+                    '${alertProvider.alerts.length} total',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppTheme.textSecondary,
@@ -245,30 +306,28 @@ class _DashboardHomeTab extends StatelessWidget {
                         margin: const EdgeInsets.only(bottom: 8),
                         child: ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: (alert.severity == 'URGENT' ||
-                                    alert.severity == 'critical')
+                            backgroundColor: (alert.displaySeverity == 'Urgent' ||
+                                    alert.displaySeverity == 'Critical')
                                 ? AppTheme.criticalRed.withValues(alpha: 0.15)
                                 : AppTheme.warningAmber.withValues(alpha: 0.15),
                             child: Icon(
                               Icons.priority_high,
-                              color: (alert.severity == 'URGENT' ||
-                                      alert.severity == 'critical')
+                              color: (alert.displaySeverity == 'Urgent' ||
+                                      alert.displaySeverity == 'Critical')
                                   ? AppTheme.criticalRed
                                   : AppTheme.warningAmber,
                               size: 18,
                             ),
                           ),
                           title: Text(
-                            alert.title,
+                            alert.displayTitle,
                             style: const TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
                             ),
                           ),
                           subtitle: Text(
-                            alert.description ?? 'No details provided',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            alert.displayDescription,
                             style: const TextStyle(fontSize: 12),
                           ),
                           trailing: Container(
@@ -281,7 +340,7 @@ class _DashboardHomeTab extends StatelessWidget {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              alert.isAcknowledged ? 'ACKNOWLEDGED' : 'PENDING',
+                              alert.displayStatus,
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,

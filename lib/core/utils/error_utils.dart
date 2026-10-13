@@ -1,4 +1,5 @@
 import '../api/api_client.dart';
+import 'message_formatter.dart';
 
 /// Utility class to sanitize, translate, and format system/API errors
 /// into user-friendly, professional, human-understandable clinical terms.
@@ -7,7 +8,7 @@ class ErrorUtils {
 
   /// Convert any error/exception into a human-friendly sentence.
   /// Removes HTTP status codes, stack traces, and technical jargon.
-  static String toUserFriendlyMessage(dynamic error, {int? statusCode}) {
+  static String toUserFriendlyMessage(dynamic error, {int? statusCode, bool isLoginContext = false}) {
     if (error == null) {
       return 'An unexpected error occurred. Please try again.';
     }
@@ -31,6 +32,72 @@ class ErrorUtils {
     raw = raw.trim();
 
     final lower = raw.toLowerCase();
+
+    // 0. Direct Technical / Database Error Code Mappings
+    if (lower == 'invalid_credentials' ||
+        lower == 'invalid credentials' ||
+        lower.contains('invalid email or password') ||
+        lower.contains('incorrect email or password')) {
+      return 'Invalid email or password.';
+    }
+
+    if (lower == 'user_not_found' || lower == 'user not found') {
+      return 'User not found.';
+    }
+
+    if (lower == 'server_error') {
+      return 'Something went wrong. Please try again.';
+    }
+
+    if (lower == 'login_failed' || lower == 'login failed') {
+      return 'Unable to sign in. Please check your email and password.';
+    }
+
+    if (lower == 'no_data_found' || lower == 'no data found') {
+      return 'No data is available at the moment.';
+    }
+
+    if (lower == 'failed') {
+      return 'Unable to complete this action. Please try again.';
+    }
+
+    if (lower == 'no_patients_found' || lower == 'no patients found') {
+      return 'No patients found.';
+    }
+
+    if (lower == 'unable_to_load_alerts') {
+      return 'Unable to load alerts.';
+    }
+
+    if (lower == 'patient_inactive') {
+      return 'Patient is inactive.';
+    }
+
+    if (lower == 'low_activity') {
+      return 'Patient activity is low.';
+    }
+
+    if (lower == 'missed_checkin') {
+      return 'Patient missed a check-in.';
+    }
+
+    if (lower == 'high_risk') {
+      return 'High-risk patient.';
+    }
+
+    if (lower == 'chat_room_created') {
+      return 'Chat room created.';
+    }
+
+    // If we are specifically in a login authentication flow and the server returned an error:
+    if (isLoginContext) {
+      if (code == 401 ||
+          code == 400 ||
+          code == 404 ||
+          (code == 500 && (lower.contains('internal server error') || lower.contains('something went wrong')))) {
+        return 'Invalid email or password.';
+      }
+    }
 
     // 1. Specific Clinical & Application Domain Errors
     if (lower.contains('cannot modify a sent prescription') ||
@@ -61,10 +128,6 @@ class ErrorUtils {
         lower.contains('no token provided') ||
         lower.contains('unauthorized: no token')) {
       return 'Your session has expired. Please sign in again.';
-    }
-
-    if (lower.contains('invalid email or password')) {
-      return 'Incorrect email or password. Please verify your details.';
     }
 
     if (lower.contains('account is deactivated') || lower.contains('account deactivated')) {
@@ -111,7 +174,7 @@ class ErrorUtils {
       switch (code) {
         case 400:
           if (raw.isNotEmpty && !_isTechnicalGarbage(raw)) {
-            return _cleanSentence(raw);
+            return MessageFormatter.toSentenceCase(raw);
           }
           return 'Invalid request details provided. Please check your input.';
         case 401:
@@ -139,7 +202,7 @@ class ErrorUtils {
       return _cleanSentence(raw);
     }
 
-    return 'An unexpected error occurred. Please try again.';
+    return 'Something went wrong. Please try again.';
   }
 
   /// Detects if the string looks like developer stack traces, code snippets, or json
@@ -151,7 +214,7 @@ class ErrorUtils {
         s.contains('typeerror') ||
         s.contains('syntaxerror') ||
         s.contains('call stack') ||
-        s.contains('at ') && s.contains('.dart') ||
+        (s.contains('at ') && s.contains('.dart')) ||
         s.contains('dioexception') ||
         s.startsWith('http://') ||
         s.startsWith('https://')) {
@@ -160,12 +223,12 @@ class ErrorUtils {
     return false;
   }
 
-  /// Ensures proper capitalization and period punctuation
+  /// Ensures proper sentence case and period punctuation
   static String _cleanSentence(String s) {
     var trimmed = s.trim();
     // Strip trailing status artifact if still present
     trimmed = trimmed.replaceAll(RegExp(r'\s*\(status:\s*\d+\)$', caseSensitive: false), '');
-    if (trimmed.isEmpty) return 'An unexpected error occurred. Please try again.';
+    if (trimmed.isEmpty) return 'Something went wrong. Please try again.';
 
     // Capitalize first letter
     final firstChar = trimmed[0].toUpperCase();

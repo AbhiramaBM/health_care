@@ -40,19 +40,19 @@ class _AlertsScreenState extends State<AlertsScreen> {
               child: Row(
                 children: [
                   FilterChip(
-                    label: const Text('Pending Alerts'),
+                    label: const Text('Pending alerts'),
                     selected: !alertProvider.showAcknowledged,
                     onSelected: (_) => alertProvider.filter(acknowledged: false),
                   ),
                   const SizedBox(width: 8),
                   FilterChip(
-                    label: const Text('Acknowledged'),
+                    label: const Text('Acknowledged alerts'),
                     selected: alertProvider.showAcknowledged,
                     onSelected: (_) => alertProvider.filter(acknowledged: true),
                   ),
                   const SizedBox(width: 8),
                   FilterChip(
-                    label: const Text('Urgent Only'),
+                    label: const Text('Urgent alerts only'),
                     selected: alertProvider.selectedPriority == 'URGENT',
                     onSelected: (sel) => alertProvider.filter(
                       priority: sel ? 'URGENT' : '',
@@ -157,7 +157,7 @@ class _AlertCard extends StatelessWidget {
                       border: Border.all(color: color.withValues(alpha: 0.4)),
                     ),
                     child: Text(
-                      alert.severity.toUpperCase(),
+                      alert.displaySeverity,
                       style: TextStyle(
                         color: color,
                         fontSize: 11,
@@ -168,7 +168,7 @@ class _AlertCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      alert.title,
+                      alert.displayTitle,
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
@@ -177,7 +177,7 @@ class _AlertCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    alert.isAcknowledged ? 'ACKNOWLEDGED' : 'PENDING',
+                    alert.displayStatus,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -199,10 +199,10 @@ class _AlertCard extends StatelessWidget {
                   ),
                 ),
               ],
-              if (alert.description != null) ...[
+              if (alert.displayDescription.isNotEmpty) ...[
                 const SizedBox(height: 6),
                 Text(
-                  alert.description!,
+                  alert.displayDescription,
                   style: const TextStyle(
                     fontSize: 13,
                     color: AppTheme.textSecondary,
@@ -278,7 +278,7 @@ class _AlertActionsModalState extends State<_AlertActionsModal> {
               children: [
                 Expanded(
                   child: Text(
-                    widget.alert.title,
+                    widget.alert.displayTitle,
                     style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -607,10 +607,10 @@ class _AlertActionsModalState extends State<_AlertActionsModal> {
                         initialValue: action,
                         decoration: const InputDecoration(labelText: 'Action'),
                         items: const [
-                          DropdownMenuItem(value: 'MODIFIED', child: Text('MODIFIED')),
-                          DropdownMenuItem(value: 'NEW', child: Text('NEW')),
-                          DropdownMenuItem(value: 'CONTINUE', child: Text('CONTINUE')),
-                          DropdownMenuItem(value: 'DISCONTINUED', child: Text('DISCONTINUED')),
+                          DropdownMenuItem(value: 'MODIFIED', child: Text('Modified')),
+                          DropdownMenuItem(value: 'NEW', child: Text('New')),
+                          DropdownMenuItem(value: 'CONTINUE', child: Text('Continue')),
+                          DropdownMenuItem(value: 'DISCONTINUED', child: Text('Discontinued')),
                         ],
                         onChanged: (val) {
                           if (val != null) setDialogState(() => action = val);
