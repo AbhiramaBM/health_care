@@ -19,6 +19,7 @@ class AppTheme {
   static const Color warningOrange = Color(0xFFF97316);
   static const Color successGreen = Color(0xFF10B981);
   static const Color infoBlue = Color(0xFF3B82F6);
+  static const Color accentPurple = Color(0xFF8B5CF6);
 
   // Text colors
   static const Color textPrimary = Color(0xFF0F172A); // Slate-900

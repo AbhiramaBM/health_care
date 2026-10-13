@@ -21,7 +21,7 @@ class AuthService {
 
     final userJson = data['user'] ?? data;
     final user = UserModel.fromJson(Map<String, dynamic>.from(userJson));
-    await _tokenStorage.saveUserData(userId: user.id, role: user.role);
+    await _tokenStorage.saveUserData(userId: user.id, role: user.role, name: user.name);
 
     // If an FCM token was previously saved, register it with the backend
     final savedFcmToken = await _tokenStorage.getFcmToken();

@@ -6,6 +6,7 @@ import '../../core/utils/top_notification_banner.dart';
 import '../../providers/alert_provider.dart';
 import '../../providers/patient_provider.dart';
 import 'patient_detail_screen.dart';
+import '../chat/conversation_screen.dart';
 
 class PatientsScreen extends StatefulWidget {
   const PatientsScreen({super.key});
@@ -382,9 +383,30 @@ class _PatientsScreenState extends State<PatientsScreen> {
                                                     ),
                                                   );
                                                   break;
+                                                case 'chat':
+                                                  Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                      builder: (_) => ConversationScreen(
+                                                        conversationId: patient.id,
+                                                        title: patient.name,
+                                                        isPatient: true,
+                                                      ),
+                                                    ),
+                                                  );
+                                                  break;
                                               }
                                             },
                                             itemBuilder: (ctx) => [
+                                              const PopupMenuItem(
+                                                value: 'chat',
+                                                child: Row(
+                                                  children: [
+                                                    Icon(Icons.chat_bubble_outline_rounded, size: 18, color: AppTheme.primaryColor),
+                                                    SizedBox(width: 8),
+                                                    Text('Chat with patient', style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.w600)),
+                                                  ],
+                                                ),
+                                              ),
                                               if (patient.hasAlert)
                                                 const PopupMenuItem(
                                                   value: 'alert',

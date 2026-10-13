@@ -6,6 +6,7 @@ class TokenStorage {
   static const String _refreshTokenKey = 'refresh_token';
   static const String _userIdKey = 'user_id';
   static const String _userRoleKey = 'user_role';
+  static const String _userNameKey = 'user_name';
   static const String _fcmTokenKey = 'fcm_token';
   static const String _deviceIdKey = 'device_id';
 
@@ -17,6 +18,7 @@ class TokenStorage {
   String? _cachedDeviceId;
   String? _cachedUserId;
   String? _cachedUserRole;
+  String? _cachedUserName;
 
   static final TokenStorage _instance = TokenStorage._internal();
   factory TokenStorage() => _instance;
@@ -26,6 +28,7 @@ class TokenStorage {
     final prefs = await SharedPreferences.getInstance();
     _cachedUserId = prefs.getString(_userIdKey);
     _cachedUserRole = prefs.getString(_userRoleKey);
+    _cachedUserName = prefs.getString(_userNameKey);
     try {
       _cachedAccessToken = await _secureStorage.read(key: _accessTokenKey);
       _cachedRefreshToken = await _secureStorage.read(key: _refreshTokenKey);
@@ -39,6 +42,7 @@ class TokenStorage {
   String? get refreshToken => _cachedRefreshToken;
   String? get userId => _cachedUserId;
   String? get userRole => _cachedUserRole;
+  String? get userName => _cachedUserName;
   bool get isAuthenticated => _cachedAccessToken != null && _cachedAccessToken!.isNotEmpty;
 
   Future<void> saveTokens({
@@ -64,11 +68,17 @@ class TokenStorage {
     }
   }
 
-  Future<void> saveUserData({required String userId, String? role}) async {
+  Future<void> saveUserData({required String userId, String? role, String? name}) async {
+    _cachedUserId = userId;
+    _cachedUserRole = role;
+    if (name != null) _cachedUserName = name;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_userIdKey, userId);
     if (role != null) {
       await prefs.setString(_userRoleKey, role);
+    }
+    if (name != null) {
+      await prefs.setString(_userNameKey, name);
     }
   }
 
@@ -130,6 +140,9 @@ class TokenStorage {
   Future<void> clear() async {
     _cachedAccessToken = null;
     _cachedRefreshToken = null;
+    _cachedUserId = null;
+    _cachedUserRole = null;
+    _cachedUserName = null;
     try {
       await _secureStorage.delete(key: _accessTokenKey);
       await _secureStorage.delete(key: _refreshTokenKey);
@@ -139,6 +152,7 @@ class TokenStorage {
     await prefs.remove(_refreshTokenKey);
     await prefs.remove(_userIdKey);
     await prefs.remove(_userRoleKey);
+    await prefs.remove(_userNameKey);
     await prefs.remove(_unacknowledgedAlertsKey);
   }
 }
