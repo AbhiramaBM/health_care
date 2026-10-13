@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../core/api/api_client.dart';
+import '../core/storage/token_storage.dart';
 import '../core/utils/error_utils.dart';
 import '../models/alert_model.dart';
 import '../services/alert_service.dart';
@@ -8,6 +10,7 @@ import '../services/prescription_service.dart';
 class AlertProvider with ChangeNotifier {
   final AlertService _alertService = AlertService();
   final PrescriptionService _prescriptionService = PrescriptionService();
+  final TokenStorage _tokenStorage = TokenStorage();
 
   List<AlertModel> _alerts = [];
   bool _isLoading = false;
@@ -26,6 +29,24 @@ class AlertProvider with ChangeNotifier {
   int get pendingAlertsCount =>
       _alerts.where((a) => !a.isAcknowledged).length;
 
+  Future<List<AlertModel>> _getLocallyUnacknowledgedAlerts() async {
+    try {
+      final rawList = await _tokenStorage.getUnacknowledgedAlertsRaw();
+      final List<AlertModel> list = [];
+      for (final raw in rawList) {
+        try {
+          final map = jsonDecode(raw);
+          if (map is Map<String, dynamic>) {
+            list.add(AlertModel.fromJson(map));
+          }
+        } catch (_) {}
+      }
+      return list;
+    } catch (_) {
+      return [];
+    }
+  }
+
   Future<void> fetchAlerts({bool refresh = false}) async {
     if (_alerts.isNotEmpty && !refresh) return;
 
@@ -34,11 +55,41 @@ class AlertProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _alerts = await _alertService.getAlerts(
+      final fetched = await _alertService.getAlerts(
         acknowledged: _showAcknowledged,
         priority: _selectedPriority,
         patientId: _selectedPatientId,
       );
+
+      final unackedAlerts = await _getLocallyUnacknowledgedAlerts();
+      final unackedIds = unackedAlerts.map((a) => a.id).toSet();
+
+      if (_showAcknowledged) {
+        // Exclude alerts that were unacknowledged by the doctor
+        _alerts = fetched.where((a) => !unackedIds.contains(a.id)).toList();
+      } else {
+        // Filter local unacknowledged alerts by priority & patient if specified
+        final localPending = unackedAlerts.where((a) {
+          if (_selectedPriority != null &&
+              _selectedPriority!.isNotEmpty &&
+              a.severity.toUpperCase() != _selectedPriority!.toUpperCase()) {
+            return false;
+          }
+          if (_selectedPatientId != null &&
+              _selectedPatientId!.isNotEmpty &&
+              a.patientId != _selectedPatientId) {
+            return false;
+          }
+          return true;
+        }).toList();
+
+        // Merge local unacknowledged alerts ahead of fetched pending alerts
+        final fetchedIds = fetched.map((a) => a.id).toSet();
+        final filteredLocal =
+            localPending.where((a) => !fetchedIds.contains(a.id)).toList();
+
+        _alerts = [...filteredLocal, ...fetched];
+      }
     } catch (e) {
       _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
     } finally {
@@ -58,7 +109,59 @@ class AlertProvider with ChangeNotifier {
     _errorMessage = null;
     try {
       final updated = await _alertService.acknowledgeAlert(alertId, noteContent: noteContent);
+      await _tokenStorage.removeUnacknowledgedAlertId(alertId);
       _updateLocalAlert(updated);
+      return true;
+    } catch (e) {
+      _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> unacknowledge(String alertId) async {
+    _errorMessage = null;
+    try {
+      // 1. Attempt backend unacknowledge in case server has or adds support
+      try {
+        await _alertService.unacknowledgeAlert(alertId);
+      } catch (_) {
+        // Live server currently returns 404 Route Not Found; handled gracefully
+      }
+
+      // 2. Find target alert model in current list or fetch by ID
+      AlertModel? target = _alerts.where((a) => a.id == alertId).firstOrNull;
+      if (target == null) {
+        try {
+          target = await _alertService.getAlertById(alertId);
+        } catch (_) {}
+      }
+
+      if (target != null) {
+        final updated = target.copyWith(
+          status: 'pending',
+          isAcknowledged: false,
+        );
+
+        // 3. Persist locally to SharedPreferences
+        await _tokenStorage.saveUnacknowledgedAlertRaw(
+          alertId,
+          jsonEncode(updated.toJson()),
+        );
+
+        // 4. Update in-memory list
+        if (_showAcknowledged) {
+          _alerts.removeWhere((a) => a.id == alertId);
+        } else {
+          final index = _alerts.indexWhere((a) => a.id == alertId);
+          if (index != -1) {
+            _alerts[index] = updated;
+          } else {
+            _alerts.insert(0, updated);
+          }
+        }
+        notifyListeners();
+      }
       return true;
     } catch (e) {
       _errorMessage = ErrorUtils.toUserFriendlyMessage(e);
@@ -71,6 +174,7 @@ class AlertProvider with ChangeNotifier {
     _errorMessage = null;
     try {
       final updated = await _alertService.ignoreAlert(alertId, noteContent: noteContent);
+      await _tokenStorage.removeUnacknowledgedAlertId(alertId);
       _updateLocalAlert(updated);
       return true;
     } catch (e) {
@@ -84,6 +188,7 @@ class AlertProvider with ChangeNotifier {
     _errorMessage = null;
     try {
       final updated = await _alertService.messagePatientAlert(alertId, messageText: messageText);
+      await _tokenStorage.removeUnacknowledgedAlertId(alertId);
       _updateLocalAlert(updated);
       return true;
     } catch (e) {
@@ -107,6 +212,7 @@ class AlertProvider with ChangeNotifier {
           noteContent: noteContent,
           medications: medications,
         );
+        await _tokenStorage.removeUnacknowledgedAlertId(alertId);
         _updateLocalAlert(updated);
         return true;
       } on ApiException catch (e) {
@@ -134,6 +240,7 @@ class AlertProvider with ChangeNotifier {
               noteContent: noteContent,
               medications: medications,
             );
+            await _tokenStorage.removeUnacknowledgedAlertId(alertId);
             _updateLocalAlert(updated);
             return true;
           }

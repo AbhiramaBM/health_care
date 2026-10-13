@@ -139,7 +139,7 @@ class _AlertCard extends StatelessWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: () => _showActionsSheet(context),
+        onTap: alert.isAcknowledged ? null : () => _showActionsSheet(context),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -220,14 +220,24 @@ class _AlertCard extends StatelessWidget {
                       color: AppTheme.textMuted,
                     ),
                   ),
-                  const Text(
-                    'Tap to take action →',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryColor,
+                  if (alert.isAcknowledged)
+                    const Text(
+                      'Reviewed',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.successGreen,
+                      ),
+                    )
+                  else
+                    const Text(
+                      'Tap to take action →',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryColor,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ],
@@ -284,60 +294,67 @@ class _AlertActionsModalState extends State<_AlertActionsModal> {
             const Divider(),
             const SizedBox(height: 8),
 
-            // 1. Acknowledge Action (POST /alerts/:id/acknowledge with ACKNOWLEDGED)
-            ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFD1FAE5),
-                child: Icon(Icons.check, color: AppTheme.successGreen),
+            // If alert is already ACKNOWLEDGED:
+            if (widget.alert.isAcknowledged) ...[
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                child: Center(
+                  child: Text(
+                    'This alert has already been acknowledged.\nNo further action required.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
               ),
-              title: const Text('Acknowledge Alert'),
-              subtitle: const Text('Confirm review with optional clinical observation'),
-              onTap: () => _showAcknowledgeDialog(context),
-            ),
+            ] else ...[
+              // If alert is PENDING:
+              // 1. Acknowledge Action (POST /alerts/:id/acknowledge with ACKNOWLEDGED)
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFD1FAE5),
+                  child: Icon(Icons.check, color: AppTheme.successGreen),
+                ),
+                title: const Text('Acknowledge Alert'),
+                subtitle: const Text('Confirm review with optional clinical observation'),
+                onTap: () => _showAcknowledgeDialog(context),
+              ),
 
-            // 2. Ignore Action (POST /alerts/:id/acknowledge with IGNORED)
-            ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFF1F5F9),
-                child: Icon(Icons.close, color: AppTheme.textSecondary),
+              // 2. Message Patient via WhatsApp (POST /alerts/:id/acknowledge with MESSAGE_SENT)
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFFEF3C7),
+                  child: Icon(Icons.chat_bubble_outline, color: AppTheme.warningAmber),
+                ),
+                title: const Text('Message Patient via WhatsApp'),
+                subtitle: const Text('Send reminder or instruction directly to patient'),
+                onTap: () => _showMessageDialog(context),
               ),
-              title: const Text('Ignore Alert (No Action Needed)'),
-              subtitle: const Text('Dismiss false positive or verified expected variance'),
-              onTap: () => _showIgnoreDialog(context),
-            ),
 
-            // 3. Message Patient via WhatsApp (POST /alerts/:id/acknowledge with MESSAGE_SENT)
-            ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFFEF3C7),
-                child: Icon(Icons.chat_bubble_outline, color: AppTheme.warningAmber),
+              // 3. Change Medication (POST /alerts/:id/acknowledge with MEDICATION_CHANGED)
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFE0E7FF),
+                  child: Icon(Icons.medication_liquid, color: AppTheme.infoBlue),
+                ),
+                title: const Text('Change Medication (Doctor Only)'),
+                subtitle: const Text('Adjust dose, frequency, or regimen for patient'),
+                onTap: () => _showChangeMedicationDialog(context),
               ),
-              title: const Text('Message Patient via WhatsApp'),
-              subtitle: const Text('Send reminder or instruction directly to patient'),
-              onTap: () => _showMessageDialog(context),
-            ),
 
-            // 4. Change Medication (POST /alerts/:id/acknowledge with MEDICATION_CHANGED)
-            ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFE0E7FF),
-                child: Icon(Icons.medication_liquid, color: AppTheme.infoBlue),
+              // 4. Add Note to Alert (POST /notes with targetType: ALERT)
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFEDE9FE),
+                  child: Icon(Icons.note_add_outlined, color: Colors.purple),
+                ),
+                title: const Text('Add Clinical Note to Alert'),
+                subtitle: const Text('Record internal note for clinical team review'),
+                onTap: () => _addNoteDialog(context, logProvider),
               ),
-              title: const Text('Change Medication (Doctor Only)'),
-              subtitle: const Text('Adjust dose, frequency, or regimen for patient'),
-              onTap: () => _showChangeMedicationDialog(context),
-            ),
-
-            // 5. Add Note to Alert (POST /notes with targetType: ALERT)
-            ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFEDE9FE),
-                child: Icon(Icons.note_add_outlined, color: Colors.purple),
-              ),
-              title: const Text('Add Clinical Note to Alert'),
-              subtitle: const Text('Record internal note for clinical team review'),
-              onTap: () => _addNoteDialog(context, logProvider),
-            ),
+            ],
           ],
         ),
       ),
@@ -431,102 +448,6 @@ class _AlertActionsModalState extends State<_AlertActionsModal> {
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
                   : const Text('Confirm'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showIgnoreDialog(BuildContext parentContext) {
-    final noteController = TextEditingController(
-      text: 'Patient confirmed values — no intervention needed.',
-    );
-    bool isSaving = false;
-    String? localError;
-
-    showDialog(
-      context: parentContext,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Ignore Alert'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (localError != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.criticalRed.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    localError!,
-                    style: const TextStyle(color: AppTheme.criticalRed, fontSize: 12),
-                  ),
-                ),
-                const SizedBox(height: 10),
-              ],
-              TextField(
-                controller: noteController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Reason for Dismissal',
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: isSaving ? null : () => Navigator.of(ctx).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.criticalRed),
-              onPressed: isSaving
-                  ? null
-                  : () async {
-                      final alertProvider = parentContext.read<AlertProvider>();
-                      final messenger = ScaffoldMessenger.of(parentContext);
-                      final navigator = Navigator.of(parentContext);
-
-                      setDialogState(() {
-                        isSaving = true;
-                        localError = null;
-                      });
-                      final note = noteController.text.trim();
-                      final success = await alertProvider.ignore(
-                            widget.alert.id,
-                            noteContent: note,
-                          );
-                      if (!ctx.mounted) return;
-                      if (success) {
-                        Navigator.of(ctx).pop();
-                        if (mounted) {
-                          navigator.pop();
-                          messenger.showSnackBar(
-                            const SnackBar(
-                              content: Text('Alert marked as ignored.'),
-                              backgroundColor: AppTheme.textSecondary,
-                            ),
-                          );
-                        }
-                      } else {
-                        final err = alertProvider.errorMessage;
-                        setDialogState(() {
-                          isSaving = false;
-                          localError = err ?? 'Failed to ignore alert.';
-                        });
-                      }
-                    },
-              child: isSaving
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Text('Ignore Alert'),
             ),
           ],
         ),

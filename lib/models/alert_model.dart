@@ -48,6 +48,34 @@ class AlertModel {
     );
   }
 
+  AlertModel copyWith({
+    String? id,
+    String? patientId,
+    String? patientName,
+    String? patientPhone,
+    String? title,
+    String? description,
+    String? severity,
+    String? status,
+    bool? isAcknowledged,
+    DateTime? createdAt,
+    Map<String, dynamic>? data,
+  }) {
+    return AlertModel(
+      id: id ?? this.id,
+      patientId: patientId ?? this.patientId,
+      patientName: patientName ?? this.patientName,
+      patientPhone: patientPhone ?? this.patientPhone,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      severity: severity ?? this.severity,
+      status: status ?? this.status,
+      isAcknowledged: isAcknowledged ?? this.isAcknowledged,
+      createdAt: createdAt ?? this.createdAt,
+      data: data ?? this.data,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

@@ -114,4 +114,12 @@ class AlertService {
     final data = response.data['alert'] ?? response.data;
     return AlertModel.fromJson(Map<String, dynamic>.from(data));
   }
+
+  /// Un-acknowledge alert (reopen): POST /alerts/:id/unacknowledge or rollback
+  Future<void> unacknowledgeAlert(String alertId) async {
+    await _client.post(
+      '/alerts/$alertId/unacknowledge',
+      data: {'status': 'PENDING'},
+    );
+  }
 }

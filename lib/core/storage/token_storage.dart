@@ -98,11 +98,33 @@ class TokenStorage {
     await prefs.setString(_deviceIdKey, deviceId);
   }
 
+  static const String _unacknowledgedAlertsKey = 'unacknowledged_alerts_cache';
+
   Future<String?> getDeviceId() async {
     if (_cachedDeviceId != null) return _cachedDeviceId;
     final prefs = await SharedPreferences.getInstance();
     _cachedDeviceId = prefs.getString(_deviceIdKey) ?? 'flutter-device-001';
     return _cachedDeviceId;
+  }
+
+  Future<List<String>> getUnacknowledgedAlertsRaw() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_unacknowledgedAlertsKey) ?? [];
+  }
+
+  Future<void> saveUnacknowledgedAlertRaw(String alertId, String alertJson) async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = List<String>.from(prefs.getStringList(_unacknowledgedAlertsKey) ?? []);
+    list.removeWhere((item) => item.contains('"id":"$alertId"') || item.contains('"id": "$alertId"'));
+    list.add(alertJson);
+    await prefs.setStringList(_unacknowledgedAlertsKey, list);
+  }
+
+  Future<void> removeUnacknowledgedAlertId(String alertId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = List<String>.from(prefs.getStringList(_unacknowledgedAlertsKey) ?? []);
+    list.removeWhere((item) => item.contains('"id":"$alertId"') || item.contains('"id": "$alertId"'));
+    await prefs.setStringList(_unacknowledgedAlertsKey, list);
   }
 
   Future<void> clear() async {
@@ -117,5 +139,6 @@ class TokenStorage {
     await prefs.remove(_refreshTokenKey);
     await prefs.remove(_userIdKey);
     await prefs.remove(_userRoleKey);
+    await prefs.remove(_unacknowledgedAlertsKey);
   }
 }

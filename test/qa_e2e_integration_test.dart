@@ -5,6 +5,7 @@ import 'package:health_care/models/patient_model.dart';
 import 'package:health_care/models/daily_log_model.dart';
 import 'package:health_care/models/clinical_note_model.dart';
 import 'package:health_care/models/chat_model.dart';
+import 'package:health_care/models/alert_model.dart';
 import 'package:health_care/providers/auth_provider.dart';
 import 'package:health_care/providers/patient_provider.dart';
 import 'package:health_care/providers/alert_provider.dart';
@@ -144,6 +145,35 @@ void main() {
       };
       expect(medChangePayload['action'], 'MEDICATION_CHANGED');
       expect((medChangePayload['medications'] as List).length, 1);
+    });
+
+    test('AlertModel unacknowledge state transition and copyWith works correctly', () {
+      final ackAlert = AlertModel(
+        id: 'alt-1',
+        title: 'High FBS',
+        severity: 'URGENT',
+        status: 'acknowledged',
+        isAcknowledged: true,
+        createdAt: DateTime.now(),
+      );
+      expect(ackAlert.isAcknowledged, true);
+      expect(ackAlert.status, 'acknowledged');
+
+      final unacked = ackAlert.copyWith(
+        status: 'pending',
+        isAcknowledged: false,
+      );
+      expect(unacked.id, 'alt-1');
+      expect(unacked.isAcknowledged, false);
+      expect(unacked.status, 'pending');
+
+      final serialized = unacked.toJson();
+      expect(serialized['acknowledged'], false);
+      expect(serialized['status'], 'pending');
+
+      final parsed = AlertModel.fromJson(serialized);
+      expect(parsed.isAcknowledged, false);
+      expect(parsed.status, 'pending');
     });
   });
 
