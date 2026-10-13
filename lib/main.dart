@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
+import 'core/utils/top_notification_banner.dart';
 import 'providers/auth_provider.dart';
 import 'providers/patient_provider.dart';
 import 'providers/alert_provider.dart';
@@ -28,6 +29,7 @@ class HealthCareApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LogProvider()),
       ],
       child: MaterialApp(
+        navigatorKey: rootNavigatorKey,
         title: 'HealthCare Clinical Platform',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,

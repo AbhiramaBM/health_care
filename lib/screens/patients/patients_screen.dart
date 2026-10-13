@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/notification_popup_helper.dart';
+import '../../core/utils/top_notification_banner.dart';
+import '../../providers/alert_provider.dart';
 import '../../providers/patient_provider.dart';
 import 'patient_detail_screen.dart';
 
@@ -157,6 +160,15 @@ class _PatientsScreenState extends State<PatientsScreen> {
                                         ),
                                       );
                                     },
+                                    onLongPress: () {
+                                      final alertProvider = context.read<AlertProvider>();
+                                      final activeAlert = alertProvider.getActiveAlertForPatient(patient.id);
+                                      NotificationPopupHelper.showPatientQuickActionsPopup(
+                                        context: context,
+                                        patient: patient,
+                                        activeAlert: activeAlert,
+                                      );
+                                    },
                                     child: Padding(
                                       padding: const EdgeInsets.all(16),
                                       child: Row(
@@ -195,7 +207,21 @@ class _PatientsScreenState extends State<PatientsScreen> {
                                                       ),
                                                     ),
                                                     if (patient.hasAlert)
-                                                      Container(
+                                                      InkWell(
+                                                        borderRadius: BorderRadius.circular(6),
+                                                        onTap: () {
+                                                          final alertProvider = context.read<AlertProvider>();
+                                                          final activeAlert = alertProvider.getActiveAlertForPatient(patient.id);
+                                                          if (activeAlert != null) {
+                                                            TopNotificationBanner.showAlert(context, activeAlert);
+                                                          } else {
+                                                            NotificationPopupHelper.showPatientQuickActionsPopup(
+                                                              context: context,
+                                                              patient: patient,
+                                                            );
+                                                          }
+                                                        },
+                                                        child: Container(
                                                         margin: const EdgeInsets.only(right: 6),
                                                         padding: const EdgeInsets.symmetric(
                                                             horizontal: 6, vertical: 2),
@@ -227,6 +253,7 @@ class _PatientsScreenState extends State<PatientsScreen> {
                                                           ],
                                                         ),
                                                       ),
+                                                    ),
                                                     if (patient.patientDisplayId != null)
                                                       Container(
                                                         padding: const EdgeInsets.symmetric(
@@ -321,9 +348,75 @@ class _PatientsScreenState extends State<PatientsScreen> {
                                               ],
                                             ),
                                           ),
-                                          const Icon(
-                                            Icons.chevron_right,
-                                            color: AppTheme.textMuted,
+                                          PopupMenuButton<String>(
+                                            icon: const Icon(Icons.more_vert, color: AppTheme.textMuted),
+                                            tooltip: 'Quick options',
+                                            onSelected: (val) {
+                                              final alertProvider = context.read<AlertProvider>();
+                                              final activeAlert = alertProvider.getActiveAlertForPatient(patient.id);
+                                              switch (val) {
+                                                case 'alert':
+                                                  if (activeAlert != null) {
+                                                    TopNotificationBanner.showAlert(context, activeAlert);
+                                                  } else {
+                                                    NotificationPopupHelper.showPatientQuickActionsPopup(
+                                                      context: context,
+                                                      patient: patient,
+                                                    );
+                                                  }
+                                                  break;
+                                                case 'popup':
+                                                  NotificationPopupHelper.showPatientQuickActionsPopup(
+                                                    context: context,
+                                                    patient: patient,
+                                                    activeAlert: activeAlert,
+                                                  );
+                                                  break;
+                                                case 'details':
+                                                  Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                      builder: (_) => PatientDetailScreen(
+                                                        patientId: patient.id,
+                                                        initialPatient: patient,
+                                                      ),
+                                                    ),
+                                                  );
+                                                  break;
+                                              }
+                                            },
+                                            itemBuilder: (ctx) => [
+                                              if (patient.hasAlert)
+                                                const PopupMenuItem(
+                                                  value: 'alert',
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(Icons.notifications_active_rounded, color: AppTheme.criticalRed, size: 18),
+                                                      SizedBox(width: 8),
+                                                      Text('View alert notification', style: TextStyle(color: AppTheme.criticalRed, fontWeight: FontWeight.w600)),
+                                                    ],
+                                                  ),
+                                                ),
+                                              const PopupMenuItem(
+                                                value: 'popup',
+                                                child: Row(
+                                                  children: [
+                                                    Icon(Icons.flash_on_outlined, size: 18, color: AppTheme.primaryColor),
+                                                    SizedBox(width: 8),
+                                                    Text('Quick actions popup'),
+                                                  ],
+                                                ),
+                                              ),
+                                              const PopupMenuItem(
+                                                value: 'details',
+                                                child: Row(
+                                                  children: [
+                                                    Icon(Icons.person_outline, size: 18),
+                                                    SizedBox(width: 8),
+                                                    Text('Open record'),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),

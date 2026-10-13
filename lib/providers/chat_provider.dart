@@ -6,6 +6,9 @@ import '../models/user_model.dart';
 import '../services/chat_service.dart';
 import '../core/socket/socket_service.dart';
 import '../core/storage/token_storage.dart';
+import '../core/theme/app_theme.dart';
+import '../core/utils/top_notification_banner.dart';
+import '../screens/chat/conversation_screen.dart';
 
 class ChatProvider with ChangeNotifier {
   final ChatService _chatService = ChatService();
@@ -67,6 +70,45 @@ class ChatProvider with ChangeNotifier {
         _socketService.markDelivered(msg.id);
         _socketService.markRead(_activeRoomId!);
         notifyListeners();
+      } else {
+        // Show WhatsApp-style top notification banner if not currently in this room
+        final currentUserId = _tokenStorage.userId;
+        if (currentUserId == null || msg.senderId != currentUserId) {
+          TopNotificationBanner.show(
+            title: msg.senderName != null && msg.senderName!.isNotEmpty
+                ? msg.senderName!
+                : 'New message',
+            message: msg.content.isNotEmpty
+                ? msg.content
+                : 'You have received a new message.',
+            timestamp: 'Just now',
+            accentColor: AppTheme.primaryColor,
+            icon: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.chat_bubble_outline_rounded,
+                color: AppTheme.primaryColor,
+                size: 18,
+              ),
+            ),
+            onTap: () {
+              final nav = rootNavigatorKey.currentState;
+              nav?.push(
+                MaterialPageRoute(
+                  builder: (_) => ConversationScreen(
+                    conversationId: msg.roomId,
+                    title: msg.senderName ?? 'Chat',
+                  ),
+                ),
+              );
+            },
+          );
+        }
       }
       // Refresh rooms list to reflect last message & unread counts
       fetchConversations(refresh: true);

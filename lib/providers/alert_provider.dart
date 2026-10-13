@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../core/api/api_client.dart';
 import '../core/socket/socket_service.dart';
 import '../core/storage/token_storage.dart';
@@ -32,8 +33,12 @@ class AlertProvider with ChangeNotifier {
   Stream<AlertModel> get onAlertNotification => _alertNotificationController.stream;
   final Set<String> _notifiedAlertIds = <String>{};
   StreamSubscription? _socketAlertSub;
+  bool _popupNotificationsEnabled = true;
+  bool _hasInitialFetched = false;
+  bool get popupNotificationsEnabled => _popupNotificationsEnabled;
 
   AlertProvider() {
+    _loadPopupSetting();
     _socketAlertSub = SocketService().onAlertReceived.listen((data) {
       try {
         final alert = AlertModel.fromJson(data);
@@ -50,6 +55,33 @@ class AlertProvider with ChangeNotifier {
         notifyListeners();
       } catch (_) {}
     });
+  }
+
+  void _loadPopupSetting() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _popupNotificationsEnabled = prefs.getBool('popup_notifications_enabled') ?? true;
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  Future<void> setPopupNotificationsEnabled(bool enabled) async {
+    _popupNotificationsEnabled = enabled;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('popup_notifications_enabled', enabled);
+    } catch (_) {}
+  }
+
+  AlertModel? getActiveAlertForPatient(String patientId) {
+    try {
+      return _alerts.firstWhere(
+        (a) => a.patientId == patientId && !a.isAcknowledged,
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   int get pendingAlertsCount =>
@@ -116,11 +148,16 @@ class AlertProvider with ChangeNotifier {
 
         _alerts = [...filteredLocal, ...fetched];
 
-        // Notify for any pending alerts that haven't been shown yet
-        for (final a in _alerts) {
-          if (!a.isAcknowledged && !_notifiedAlertIds.contains(a.id)) {
-            _notifiedAlertIds.add(a.id);
-            _alertNotificationController.add(a);
+        // Notify only for newly arrived alerts that haven't been shown yet
+        if (!_hasInitialFetched) {
+          _hasInitialFetched = true;
+          _notifiedAlertIds.addAll(_alerts.map((a) => a.id));
+        } else {
+          for (final a in _alerts) {
+            if (!a.isAcknowledged && !_notifiedAlertIds.contains(a.id)) {
+              _notifiedAlertIds.add(a.id);
+              _alertNotificationController.add(a);
+            }
           }
         }
       }

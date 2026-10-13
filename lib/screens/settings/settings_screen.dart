@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/config/app_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/alert_provider.dart';
 import '../../services/user_service.dart';
 import '../auth/login_screen.dart';
 import 'server_config_dialog.dart';
@@ -13,6 +14,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final alertProvider = context.watch<AlertProvider>();
     final user = authProvider.currentUser;
 
     return Scaffold(
@@ -151,6 +153,15 @@ class SettingsScreen extends StatelessWidget {
                       }
                     }
                   },
+                ),
+                const Divider(height: 1),
+                SwitchListTile(
+                  secondary: const Icon(Icons.notifications_active_rounded,
+                      color: AppTheme.warningOrange),
+                  title: const Text('Allow notification banners'),
+                  subtitle: const Text('Display top notification banners when alerts or messages arrive'),
+                  value: alertProvider.popupNotificationsEnabled,
+                  onChanged: (val) => alertProvider.setPopupNotificationsEnabled(val),
                 ),
               ],
             ),

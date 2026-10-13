@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/top_notification_banner.dart';
 import '../../models/alert_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/patient_provider.dart';
@@ -48,46 +49,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _showInAppAlertNotification(AlertModel alert) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.notifications_active, color: Colors.white, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    alert.displayTitle,
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
-                  ),
-                  Text(
-                    alert.displayDescription,
-                    style: const TextStyle(fontSize: 12, color: Colors.white70),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: alert.displaySeverity == 'Critical' || alert.displaySeverity == 'Urgent'
-            ? AppTheme.criticalRed
-            : AppTheme.warningAmber,
-        duration: const Duration(seconds: 5),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        action: SnackBarAction(
-          label: 'View',
-          textColor: Colors.white,
-          onPressed: () {
-            setState(() => _currentIndex = 2); // Switch to Alerts tab
-          },
-        ),
-      ),
+    TopNotificationBanner.showAlert(
+      context,
+      alert,
+      onTap: () {
+        setState(() => _currentIndex = 2); // Switch to Alerts tab
+      },
     );
   }
 
