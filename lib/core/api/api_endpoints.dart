@@ -53,6 +53,9 @@ class ApiEndpoints {
   static const String chatRoomsDirect = '/chat/rooms/direct';
   static String chatRoomById(String roomId) => '/chat/rooms/$roomId';
   static String chatRoomMessages(String roomId) => '/chat/rooms/$roomId/messages';
+
+  // COMMUNITY
+  static const String communityRooms = '/community/rooms';
 }
 
 /// Socket.IO Event names matching SOCKET_GUIDE.md exactly

@@ -8,6 +8,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/patient_provider.dart';
 import '../../providers/alert_provider.dart';
 import '../../providers/chat_provider.dart';
+import '../../providers/community_provider.dart';
 import '../patients/patients_screen.dart';
 import '../alerts/alerts_screen.dart';
 import '../chat/chat_list_screen.dart';
@@ -32,6 +33,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context.read<PatientProvider>().fetchPatients();
       alertProvider.fetchAlerts();
       context.read<ChatProvider>().fetchConversations();
+      context.read<CommunityProvider>().fetchCommunities();
 
       // Listen for alert notifications in real-time
       _alertNotificationSub?.cancel();
@@ -108,10 +110,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             label: 'Alerts',
           ),
           const NavigationDestination(
-            icon: Icon(Icons.chat_bubble_outline),
+            icon: Icon(Icons.groups_outlined),
             selectedIcon:
-                Icon(Icons.chat_bubble, color: AppTheme.primaryColor),
-            label: 'Chat',
+                Icon(Icons.groups, color: AppTheme.primaryColor),
+            label: 'Community',
           ),
           const NavigationDestination(
             icon: Icon(Icons.person_outline),
@@ -133,6 +135,7 @@ class _DashboardHomeTab extends StatelessWidget {
     final patientProvider = context.watch<PatientProvider>();
     final alertProvider = context.watch<AlertProvider>();
     final chatProvider = context.watch<ChatProvider>();
+    final communityProvider = context.watch<CommunityProvider>();
 
     return Scaffold(
       appBar: AppBar(
@@ -161,6 +164,7 @@ class _DashboardHomeTab extends StatelessWidget {
               patientProvider.fetchPatients(refresh: true);
               alertProvider.fetchAlerts(refresh: true);
               chatProvider.fetchConversations(refresh: true);
+              communityProvider.fetchCommunities(refresh: true);
             },
           ),
         ],
@@ -170,6 +174,7 @@ class _DashboardHomeTab extends StatelessWidget {
           await patientProvider.fetchPatients(refresh: true);
           await alertProvider.fetchAlerts(refresh: true);
           await chatProvider.fetchConversations(refresh: true);
+          await communityProvider.fetchCommunities(refresh: true);
         },
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -203,9 +208,9 @@ class _DashboardHomeTab extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _MetricCard(
-                      label: 'Chat rooms',
-                      value: '${chatProvider.conversations.length}',
-                      icon: Icons.forum_outlined,
+                      label: 'Communities',
+                      value: '${communityProvider.communities.length}',
+                      icon: Icons.groups_rounded,
                       color: AppTheme.infoBlue,
                     ),
                   ),

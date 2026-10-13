@@ -7,6 +7,7 @@ import 'providers/patient_provider.dart';
 import 'providers/alert_provider.dart';
 import 'providers/chat_provider.dart';
 import 'providers/log_provider.dart';
+import 'providers/community_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 
@@ -27,6 +28,7 @@ class HealthCareApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AlertProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => LogProvider()),
+        ChangeNotifierProvider(create: (_) => CommunityProvider()),
       ],
       child: MaterialApp(
         navigatorKey: rootNavigatorKey,
